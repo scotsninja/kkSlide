@@ -1,14 +1,43 @@
 /*
-* kkSlide - a jQuery plugin
+* kkSlide - a jQuery image slider plugin
 *
-* Version: 0.9.0
+* Version: 1.0.0
 * Copyright 2012 Kyle Knox - http://20xxproductions.com
 *
-* Dual licensed under MIT or GPLv2 licenses
+* Licensed under MIT license
 *   http://en.wikipedia.org/wiki/MIT_License
-*   http://en.wikipedia.org/wiki/GNU_General_Public_License
 *
 * Date: 2012-03-20 21:00:00
 */
 
 A very simple image slider jQuery plugin.
+
+Usage:
+
+1) In the document head, include CSS file:
+	<link rel="stylesheet" type="text/css" href="kkslide/jquery.kkslide.css" />
+
+2) Place the images in a <div> along with a <div> for the loading icon:
+	<div class="mySliderName" style="height:270px;width:570px;">
+		<a href="http://www.flickr.com/photos/jliba/4665625073/" title="145.365 - Happy Bokeh Thursday! | Flickr - Photo Sharing!" target="_blank"><img src="http://slidesjs.com/examples/standard/img/slide-1.jpg" width="570" height="270" alt="Slide 1" border="0"></a>
+		<a href="http://www.flickr.com/photos/stephangeyer/3020487807/" title="Taxi | Flickr - Photo Sharing!" target="_blank"><img src="http://slidesjs.com/examples/standard/img/slide-2.jpg" width="570" height="270" alt="Slide 2" border="0"></a>
+		<a href="http://www.flickr.com/photos/childofwar/2984345060/" title="Happy Bokeh raining Day | Flickr - Photo Sharing!" target="_blank"><img src="http://slidesjs.com/examples/standard/img/slide-3.jpg" width="570" height="270" alt="Slide 3" border="0"></a>
+		<a href="http://www.flickr.com/photos/aftab/3152515428/" title="Save my love for loneliness | Flickr - Photo Sharing!" target="_blank"><img src="http://slidesjs.com/examples/standard/img/slide-7.jpg" width="570" height="270" alt="Slide 7" border="0"></a>
+		<div id="loader" class="loader"></div>
+	</div>
+	
+3) At the end of the document, before the closing <body> tag, include the JS file:
+	<script type="text/javascript" src="kkslide/jquery.kkslide.js"></script>
+	
+4) Once the document has loaded, call the slider function and set the options:
+	<script type="text/javascript">
+		$(document).ready(function() {
+			$('.mySliderName').kkSlide({
+				hoverPause: true,
+				speed: 3500,
+				transition: 'slide'
+			});
+		});
+	</script>
+
+5) If jQuery-ui is enabled, you have additional easing options.  For more info, visit http://jqueryui.com/demos/effect/easing.html

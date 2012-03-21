@@ -1,32 +1,28 @@
 /*
-* kkSlide
+* kkSlide - a jQuery image slider plugin
 *
-* Version: 0.9.0
+* Version: 1.0.0
 * Copyright 2012 Kyle Knox - http://20xxproductions.com
 *
-* Dual licensed under MIT or GPLv2 licenses
+* Licensed under MIT license
 *   http://en.wikipedia.org/wiki/MIT_License
-*   http://en.wikipedia.org/wiki/GNU_General_Public_License
 *
 * Date: 2012-03-20 21:00:00
-*/
-/* todo:
-update repo
 */
 (function($) {
 $.fn.kkSlide = function(options) {
 
 	var defaults = {
-		'hoverPause' : false,		// pause the slider on mouse over
-		'transitionSpeed': 750,		// number milliseconds for transition speed
-		'easing': 'swing',			// easing effect to use for slide
-		'speed': 5000,				// number milliseconds to display a slide
-		'start' : 0,				// first slide (starting at 0) to display
 		'autoplay': true,			// if true, start the slideshow as soon as it loads
 		'displayNav': true,			// display the navigation buttons at the bottom of the slider
-		'transition': 'simple'		// transition effect: 	simple (show/hide)
+		'easing': 'swing',			// easing effect to use for slide
+		'hoverPause' : false,		// pause the slider on mouse over
+		'speed': 5000,				// number milliseconds to display a slide
+		'start' : 0,				// first slide (starting at 0) to display
+		'transition': 'simple',		// transition effect: 	simple (show/hide)
 									//						fade (slides fade in/out)
 									//						slide (slides slide from left to right)
+		'transitionSpeed': 750		// number milliseconds for transition speed
 	};
 	
 	var settings = $.extend(defaults, options);
@@ -196,6 +192,7 @@ function kkSlide(element, options) {
 			
 			$(slides[currSlide]).animate({"left":wpx+'px'}, {
 				duration: settings.transitionSpeed,
+				easing: settings.easing,
 				step: function(now, fx) {
 					$(slides[newSlide]).css({'left':(o+now)+'px'});
 				},
