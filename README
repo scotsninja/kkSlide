@@ -1,0 +1,14 @@
+/*
+* kkSlide - a jQuery plugin
+*
+* Version: 0.9.0
+* Copyright 2012 Kyle Knox - http://20xxproductions.com
+*
+* Dual licensed under MIT or GPLv2 licenses
+*   http://en.wikipedia.org/wiki/MIT_License
+*   http://en.wikipedia.org/wiki/GNU_General_Public_License
+*
+* Date: 2012-03-20 21:00:00
+*/
+
+A very simple image slider jQuery plugin.
