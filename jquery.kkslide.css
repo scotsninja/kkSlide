@@ -1,0 +1,40 @@
+.kks_slides {
+	width:100%;
+	height:100%;
+	overflow:hidden;
+	position:relative;
+}
+
+.kks_slides .slide {
+	position:absolute;
+}
+
+.loader {
+	background:#000 url('kkslide/loader.gif') no-repeat center center;
+	opacity:.6;
+	width:100%;
+	height:100%;
+}
+
+.kks_nav {
+	width:100%;
+	opacity:.7;
+	background-color:#000;
+	height:18px;
+	position:absolute;
+	bottom:0px;
+}
+
+.kks_nav a {
+	background-image: url('button.png');
+	background-position:0px 0px;
+	display:block;
+	float:left;
+	margin:2px 4px;
+	width:12px;
+	height:12px;
+}
+
+.kks_nav a.selected {
+	background-position:0px 13px;
+}

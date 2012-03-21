@@ -11,7 +11,7 @@
 * Date: 2012-03-20 21:00:00
 */
 /* todo:
-cross-broswer
+update repo
 */
 (function($) {
 $.fn.kkSlide = function(options) {
@@ -19,6 +19,7 @@ $.fn.kkSlide = function(options) {
 	var defaults = {
 		'hoverPause' : false,		// pause the slider on mouse over
 		'transitionSpeed': 750,		// number milliseconds for transition speed
+		'easing': 'swing',			// easing effect to use for slide
 		'speed': 5000,				// number milliseconds to display a slide
 		'start' : 0,				// first slide (starting at 0) to display
 		'autoplay': true,			// if true, start the slideshow as soon as it loads
@@ -26,7 +27,6 @@ $.fn.kkSlide = function(options) {
 		'transition': 'simple'		// transition effect: 	simple (show/hide)
 									//						fade (slides fade in/out)
 									//						slide (slides slide from left to right)
-									//						slide-accel (slide from left to right, but slight speed accelerates as it slides)
 	};
 	
 	var settings = $.extend(defaults, options);
@@ -57,6 +57,8 @@ function kkSlide(element, options) {
 	
 	// creates the slider and registers events
 	function render() {
+		$(_element).addClass('kks_slides');
+		
 		// load slides
 		load();
 		
@@ -177,9 +179,7 @@ function kkSlide(element, options) {
 	
 	// swaps out slides based on transition effect set
 	function transitionSlide(newSlide) {
-		if (settings.transition == 'slide-accel') {
-			console.log('todo');
-		} else if (settings.transition == 'slide') {
+		if (settings.transition == 'slide') {
 			// determine width of element and direction of slide
 			var w = $(_element).width(), wpx, $old = $(slides[currSlide]);
 			var dir = (newSlide < currSlide) ? 'right' : 'left';
