@@ -105,12 +105,12 @@ function kkSlide(element, options) {
 	
 	// makes nav bar visible
 	function showNav() {
-		$('#kks_nav').fadeIn();
+		$(_element).find('.kks_nav').fadeIn();
 	}
 	
 	// hides the nav bar
 	function hideNav() {
-		$('#kks_nav').fadeOut();
+		$(_element).find('.kks_nav').fadeOut();
 	}
 	
 	// display loading icon and mask
