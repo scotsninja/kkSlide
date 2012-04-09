@@ -16,7 +16,7 @@ $.fn.kkSlide = function(options) {
 		'autoplay': true,			// if true, start the slideshow as soon as it loads
 		'displayNav': true,			// display the navigation buttons at the bottom of the slider
 		'easing': 'swing',			// easing effect to use for slide
-		'hoverPause' : false,		// pause the slider on mouse over
+		'pauseOnHover' : false,		// pause the slider on mouse over
 		'speed': 5000,				// number milliseconds to display a slide
 		'start' : 0,				// first slide (starting at 0) to display
 		'transition': 'simple',		// transition effect: 	simple (show/hide)
@@ -51,6 +51,10 @@ function kkSlide(element, options) {
 	var totalSlides = 0;
 	var timer;
 	
+	if (settings.transition == 'stream') {
+		settings.speed = settings.transitionSpeed;
+	}
+	
 	// creates the slider and registers events
 	function render() {
 		$(_element).addClass('kks_slides');
@@ -74,11 +78,11 @@ function kkSlide(element, options) {
 			start();
 		}
 		
-		if (settings.hoverPause) {
+		if (settings.pauseOnHover) {
 			$(_element).hover(function() {
 				stop();
 			}, function() {
-				start();
+				//start();
 			});
 		}
 	}
@@ -103,14 +107,30 @@ function kkSlide(element, options) {
 		});
 	}
 	
+	function renderViewable(visible) {
+		var width = $(_element).width(),
+			currSlideWidth = slides[currSlide].width,
+			visibleWidth = 0,
+			i = (currSlide < (totalSlides-1)) ? currSlide : 0;
+			visible = new Array();
+			
+		// calculate which slides will be visible after the first slide is out of view
+		while (visibleWidth < (width+currSlideWidth)) {
+			$(slides[i].slide).css({'display':'block','top':0,'left':visibleWidth+'px'});
+			visibleWidth += slides[i].width;
+			visible.push(i);
+			i = (i < (totalSlides-1)) ? i+1 : 0;
+		}
+	}
+	
 	// makes nav bar visible
 	function showNav() {
-		$(_element).find('.kks_nav').fadeIn();
+		$('#kks_nav').fadeIn();
 	}
 	
 	// hides the nav bar
 	function hideNav() {
-		$(_element).find('.kks_nav').fadeOut();
+		$('#kks_nav').fadeOut();
 	}
 	
 	// display loading icon and mask
@@ -129,11 +149,17 @@ function kkSlide(element, options) {
 		$(_element).children().each(function(i, e) {
 			if ($(e).is('a') || $(e).is('img')) {
 				$(e).addClass('slide');
-				slides.push(e);
-				totalSlides++;
 				$(e).hide();
+				slides.push({'slide':e,'width':$(e).width()});
+				totalSlides++;
+
 			}
 		});
+
+		if (settings.transition == 'stream') {
+			renderViewable();
+			//transitionSlide(totalSlides-1);
+		}
 		
 		hideLoader();
 	}
@@ -162,8 +188,8 @@ function kkSlide(element, options) {
 		}
 		
 		if (currSlide == s) {
-			if (!$(slides[s]).is(':visible')) {
-				$(slides[s]).show();
+			if (!$(slides[s].slide).is(':visible')) {
+				$(slides[s].slide).show();
 			}
 			return;
 		}
@@ -177,7 +203,7 @@ function kkSlide(element, options) {
 	function transitionSlide(newSlide) {
 		if (settings.transition == 'slide') {
 			// determine width of element and direction of slide
-			var w = $(_element).width(), wpx, $old = $(slides[currSlide]);
+			var w = $(_element).width(), wpx, $old = $(slides[currSlide].slide);
 			var dir = (newSlide < currSlide) ? 'right' : 'left';
 			if (dir == 'right') {
 				wpx = w;	// final left position of the current slide
@@ -188,24 +214,86 @@ function kkSlide(element, options) {
 			}
 			
 			// make new slide visible offscreen
-			$(slides[newSlide]).css({'display':'block','top':0,'left':o+'px'});	
+			$(slides[newSlide].slide).css({'display':'block','top':0,'left':o+'px'});
 			
-			$(slides[currSlide]).animate({"left":wpx+'px'}, {
+			$(slides[currSlide].slide).animate({"left":wpx+'px'}, {
 				duration: settings.transitionSpeed,
 				easing: settings.easing,
 				step: function(now, fx) {
-					$(slides[newSlide]).css({'left':(o+now)+'px'});
+					$(slides[newSlide].slide).css({'left':(o+now)+'px'});
 				},
 				complete: function() {
 					$old.hide();
 				}
 			});
 		} else if (settings.transition == 'fade') {
-			$(slides[currSlide]).fadeOut(settings.transitionSpeed);
-			$(slides[newSlide]).fadeIn(settings.transitionSpeed);
+			$(slides[currSlide].slide).fadeOut(settings.transitionSpeed);
+			$(slides[newSlide].slide).fadeIn(settings.transitionSpeed);
+		} else if (settings.transition == 'stream') {
+			//var width = $(_element).width(), $old = $(slides[currSlide].slide), currSlideWidth = $(slides[currSlide]).width(), visibleWidth = 0, i = currSlide+1, visible = new Array();
+			var width = $(_element).width(),
+				$old = $(slides[currSlide].slide),
+				currSlideWidth = slides[currSlide].width,
+				visibleWidth = 0,
+				i = (currSlide < (totalSlides-1)) ? currSlide+1 : 0;
+				visible = new Array();
+
+			// calculate which slides will be visible after the first slide is out of view
+			while (visibleWidth < width) {
+				$(slides[i].slide).css({'display':'block','top':0,'left':visibleWidth+'px'});
+				visibleWidth += slides[i].width;
+				visible.push(i);
+				i = (i < (totalSlides-1)) ? i+1 : 0;
+			}
+
+			// move left slide out of view
+			$(slides[currSlide].slide).animate({"left":(currSlideWidth*-1)+'px'}, {
+				duration: settings.transitionSpeed,
+				easing: settings.easing,
+				step: function(now, fx) {
+					//$(slides[newSlide].slide).css({left:'+'+now+'px'});
+					//$(slides[newSlide].slide).css({'left':(currSlideWidth+now)+'px'});
+					//$(slides[(newSlide+1)].slide).css({'left':(currSlideWidth+slides[newSlide].width+now)+'px'});
+					//$(slides[(newSlide+2)].slide).css({'left':(currSlideWidth+slides[newSlide].width+slides[(newSlide+1)].width+now)+'px'});
+					$.each(visible, function(i, v) {
+						var offset = 0, j=0;
+						if (i >0) {
+							j=i;
+							do {
+							offset += slides[j--].width;
+							} while (j > 0);
+						}
+						
+						offset += currSlideWidth;
+						//var offset = (i > 0) ? slides[(visible[i])].width : currSlideWidth;
+						//var vo = (v < (totalSlides-1)) ? v+1 : 0;
+						//offset = slides[visible[i]].width;
+						//offset = slides[vo].width;
+						//var offset = $(slides[(slides[visible[i-1])].slide).css('right');
+						//console.log(offset);
+						$(slides[v].slide).css({'left':(offset+now)+'px'});
+					});
+				},
+				complete: function() {
+					$old.hide();
+				}
+			});
+			// slide all slides to right
+			
+			/*function animation(){
+				cloud1();	
+			}
+			function cloud1(){
+				$("#ribbon").animate({left:"-=1600px"},20000).animate({left:"0px"}, 0)
+				setTimeout("cloud1()",2000);
+			}
+			$(document).ready(function() {
+				setTimeout("animation()",300);
+
+			});*/
 		} else {
-			$(slides[currSlide]).hide();
-			$(slides[newSlide]).show();
+			$(slides[currSlide].slide).hide();
+			$(slides[newSlide].slide).show();
 		}
 		
 		currSlide = newSlide;

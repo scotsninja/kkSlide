@@ -20,6 +20,7 @@
 
 .kks_slides .slide {
 	position:absolute;
+	float:left;
 }
 
 .loader {
