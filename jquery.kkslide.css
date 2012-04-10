@@ -22,6 +22,20 @@
 	position:absolute;
 	float:left;
 }
+.kks_slides .slide img {
+	border:none;
+}
+
+ul.kks_slides_stream {
+	margin-left:-40px;
+}
+ul.kks_slides_stream li {
+	list-style-type:none;
+	width:100%;
+	margin:0px;
+	position:absolute;
+	float:left;
+}
 
 .loader {
 	background:#000 url('loader.gif') no-repeat center center;

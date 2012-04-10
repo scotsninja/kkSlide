@@ -50,10 +50,7 @@ function kkSlide(element, options) {
 	var slides = [];
 	var totalSlides = 0;
 	var timer;
-	
-	if (settings.transition == 'stream') {
-		settings.speed = settings.transitionSpeed;
-	}
+	var streamWidth = 0;
 	
 	// creates the slider and registers events
 	function render() {
@@ -67,15 +64,21 @@ function kkSlide(element, options) {
 		
 		if (settings.displayNav) {
 			showNav();
+		} else {
+			hideNav();
 		}
 		
 		// display first slide
-		switchSlide(settings.start);
-		$('#kks_button'+settings.start).addClass('selected');
+		if (settings.transition == 'stream') {
+			stream();
+		} else {
+			switchSlide(settings.start);
+			$('#kks_button'+settings.start).addClass('selected');
 		
-		// start slider
-		if (settings.autoplay) {
-			start();
+			// start slider
+			if (settings.autoplay) {
+				start();
+			}
 		}
 		
 		if (settings.pauseOnHover) {
@@ -107,30 +110,39 @@ function kkSlide(element, options) {
 		});
 	}
 	
-	function renderViewable(visible) {
-		var width = $(_element).width(),
-			currSlideWidth = slides[currSlide].width,
-			visibleWidth = 0,
-			i = (currSlide < (totalSlides-1)) ? currSlide : 0;
-			visible = new Array();
+	function renderStream(offset) {
+		var totalWidth = 0, id = 'kks_'+new Date().getTime();
+		
+		$(_element).find('.kks_slides_stream').append('<li id="'+id+'"><div></div></li>');
+		$(_element).find('#'+id).addClass('active');
 			
-		// calculate which slides will be visible after the first slide is out of view
-		while (visibleWidth < (width+currSlideWidth)) {
-			$(slides[i].slide).css({'display':'block','top':0,'left':visibleWidth+'px'});
-			visibleWidth += slides[i].width;
-			visible.push(i);
-			i = (i < (totalSlides-1)) ? i+1 : 0;
+		$.each(slides, function(i, e) {
+			$(slides[i].slide).css({position:'relative'}).clone().appendTo($(_element).find('#'+id).find('div')).show();
+			$(slides[i].slide).hide();
+			totalWidth += slides[i].width;
+		});
+
+		$(_element).find('#'+id).width(totalWidth).show();
+
+		if (offset) {
+			$(_element).find('#'+id).css({left:$(_element).width()+'px'});
 		}
+		
+		$(_element).find('#'+id).hover(function() {
+			$(_element).find('.kks_slides_stream li').stop(true);
+		}, function() {
+			stream();
+		});
 	}
 	
 	// makes nav bar visible
 	function showNav() {
-		$('#kks_nav').fadeIn();
+		$(_element).find('.kks_nav').show();
 	}
 	
 	// hides the nav bar
 	function hideNav() {
-		$('#kks_nav').fadeOut();
+		$(_element).find('.kks_nav').hide();
 	}
 	
 	// display loading icon and mask
@@ -151,14 +163,14 @@ function kkSlide(element, options) {
 				$(e).addClass('slide');
 				$(e).hide();
 				slides.push({'slide':e,'width':$(e).width()});
+				streamWidth += slides[i].width;
 				totalSlides++;
-
 			}
 		});
 
 		if (settings.transition == 'stream') {
-			renderViewable();
-			//transitionSlide(totalSlides-1);
+			$(_element).append('<ul class="kks_slides_stream"></ul>');
+			renderStream();
 		}
 		
 		hideLoader();
@@ -229,8 +241,7 @@ function kkSlide(element, options) {
 		} else if (settings.transition == 'fade') {
 			$(slides[currSlide].slide).fadeOut(settings.transitionSpeed);
 			$(slides[newSlide].slide).fadeIn(settings.transitionSpeed);
-		} else if (settings.transition == 'stream') {
-			//var width = $(_element).width(), $old = $(slides[currSlide].slide), currSlideWidth = $(slides[currSlide]).width(), visibleWidth = 0, i = currSlide+1, visible = new Array();
+		} else if (settings.transition == 'stream-old') {
 			var width = $(_element).width(),
 				$old = $(slides[currSlide].slide),
 				currSlideWidth = slides[currSlide].width,
@@ -247,56 +258,70 @@ function kkSlide(element, options) {
 			}
 
 			// move left slide out of view
+			var offsets = new Array();
 			$(slides[currSlide].slide).animate({"left":(currSlideWidth*-1)+'px'}, {
 				duration: settings.transitionSpeed,
 				easing: settings.easing,
 				step: function(now, fx) {
-					//$(slides[newSlide].slide).css({left:'+'+now+'px'});
-					//$(slides[newSlide].slide).css({'left':(currSlideWidth+now)+'px'});
-					//$(slides[(newSlide+1)].slide).css({'left':(currSlideWidth+slides[newSlide].width+now)+'px'});
-					//$(slides[(newSlide+2)].slide).css({'left':(currSlideWidth+slides[newSlide].width+slides[(newSlide+1)].width+now)+'px'});
-					$.each(visible, function(i, v) {
-						var offset = 0, j=0;
-						if (i >0) {
-							j=i;
-							do {
-							offset += slides[j--].width;
-							} while (j > 0);
+					for (var i=0; i < visible.length; i++) {
+						if (offsets[i]) {
+							//offsets[i] += now;
+						} else {
+							offsets.push(0);
+							var j=0;
+							if (i >0) {
+								j=i;
+								do {
+								offsets[i] += slides[j--].width;
+								} while (j > 0);
+							}
+							
+							offsets[i] += currSlideWidth;
 						}
-						
-						offset += currSlideWidth;
-						//var offset = (i > 0) ? slides[(visible[i])].width : currSlideWidth;
-						//var vo = (v < (totalSlides-1)) ? v+1 : 0;
-						//offset = slides[visible[i]].width;
-						//offset = slides[vo].width;
-						//var offset = $(slides[(slides[visible[i-1])].slide).css('right');
-						//console.log(offset);
-						$(slides[v].slide).css({'left':(offset+now)+'px'});
-					});
+
+						$(slides[visible[i]].slide).css({left:(offsets[i]+now)+'px'});
+					}
 				},
 				complete: function() {
 					$old.hide();
 				}
 			});
-			// slide all slides to right
-			
-			/*function animation(){
-				cloud1();	
-			}
-			function cloud1(){
-				$("#ribbon").animate({left:"-=1600px"},20000).animate({left:"0px"}, 0)
-				setTimeout("cloud1()",2000);
-			}
-			$(document).ready(function() {
-				setTimeout("animation()",300);
-
-			});*/
 		} else {
 			$(slides[currSlide].slide).hide();
 			$(slides[newSlide].slide).show();
 		}
 		
 		currSlide = newSlide;
+	}
+	
+	function stream() {
+		var threshold = 0,		// point which to render new li, so there are no gaps between slides
+			rendered = ($(_element).find('.kks_slides_stream li').length>1) ? true : false,		// if a new li has been rendered
+			dur = settings.speed;	// transition duration
+		
+		if (parseInt($(_element).find('.kks_slides_stream > .active').css('left'),10) < 0) {
+			dur = dur * (1-(Math.abs(parseInt($(_element).find('.kks_slides_stream > .active').css('left'),10))/streamWidth));
+		}
+		
+		threshold = (streamWidth - $(_element).width())*-1;
+
+		$(_element).find('.kks_slides_stream li:first').animate({"left":(streamWidth*-1)+'px'}, {
+			duration: dur,
+			easing: settings.easing,
+			queue: true,
+			step: function(now, fx) {
+				if (rendered == false && now < threshold && $(_element).find('.kks_slides_stream li').length < 2) {
+					renderStream(true);
+					rendered = true;
+				} else if (rendered) {
+					$(_element).find('.kks_slides_stream li:last').css({left:(streamWidth+now)+'px'});
+				}
+			},
+			complete: function() {
+				$(this).remove();
+				stream();
+			}
+		});
 	}
 	
 	/* Slideshow functions */
