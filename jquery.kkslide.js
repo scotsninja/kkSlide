@@ -1,13 +1,13 @@
 /*
 * kkSlide - a jQuery image slider plugin
 *
-* Version: 1.0.0
+* Version: 1.1.0
 * Copyright 2012 Kyle Knox - http://20xxproductions.com
 *
 * Licensed under MIT license
 *   http://en.wikipedia.org/wiki/MIT_License
 *
-* Date: 2012-03-20 21:00:00
+* Date: 2012-04-10 00:29:00
 */
 (function($) {
 $.fn.kkSlide = function(options) {
@@ -22,6 +22,7 @@ $.fn.kkSlide = function(options) {
 		'transition': 'simple',		// transition effect: 	simple (show/hide)
 									//						fade (slides fade in/out)
 									//						slide (slides slide from left to right)
+									//						stream (for a continuous sliding, news ticker-like effect)
 		'transitionSpeed': 750		// number milliseconds for transition speed
 	};
 	
@@ -79,14 +80,14 @@ function kkSlide(element, options) {
 			if (settings.autoplay) {
 				start();
 			}
-		}
-		
-		if (settings.pauseOnHover) {
-			$(_element).hover(function() {
-				stop();
-			}, function() {
-				//start();
-			});
+			
+			if (settings.pauseOnHover) {
+				$(_element).hover(function() {
+					stop();
+				}, function() {
+					start();
+				});
+			}
 		}
 	}
 	
@@ -110,19 +111,20 @@ function kkSlide(element, options) {
 		});
 	}
 	
+	// renders one stream segment ('li')
 	function renderStream(offset) {
-		var totalWidth = 0, id = 'kks_'+new Date().getTime();
+		var id = 'kks_'+new Date().getTime();
 		
 		$(_element).find('.kks_slides_stream').append('<li id="'+id+'"><div></div></li>');
 		$(_element).find('#'+id).addClass('active');
 			
+		// copy each slide into the newly created li, then make sure the original is hidden
 		$.each(slides, function(i, e) {
 			$(slides[i].slide).css({position:'relative'}).clone().appendTo($(_element).find('#'+id).find('div')).show();
 			$(slides[i].slide).hide();
-			totalWidth += slides[i].width;
 		});
 
-		$(_element).find('#'+id).width(totalWidth).show();
+		$(_element).find('#'+id).width(streamWidth).show();
 
 		if (offset) {
 			$(_element).find('#'+id).css({left:$(_element).width()+'px'});
