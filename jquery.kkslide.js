@@ -1,13 +1,13 @@
 /*
 * kkSlide - a jQuery image slider plugin
 *
-* Version: 1.1.0
+* Version: 1.3.1
 * Copyright 2012 Kyle Knox - http://20xxproductions.com
 *
 * Licensed under MIT license
 *   http://en.wikipedia.org/wiki/MIT_License
 *
-* Date: 2012-04-10 00:29:00
+* Date: 2012-04-16 00:32:00
 */
 (function($) {
 $.fn.kkSlide = function(options) {
@@ -15,6 +15,7 @@ $.fn.kkSlide = function(options) {
 	var defaults = {
 		'autoplay': true,			// if true, start the slideshow as soon as it loads
 		'displayNav': true,			// display the navigation buttons at the bottom of the slider
+		'navFade': false,			// fade in/out nav on hover
 		'easing': 'swing',			// easing effect to use for slide
 		'pauseOnHover' : false,		// pause the slider on mouse over
 		'speed': 5000,				// number milliseconds to display a slide
@@ -22,7 +23,6 @@ $.fn.kkSlide = function(options) {
 		'transition': 'simple',		// transition effect: 	simple (show/hide)
 									//						fade (slides fade in/out)
 									//						slide (slides slide from left to right)
-									//						stream (for a continuous sliding, news ticker-like effect)
 		'transitionSpeed': 750		// number milliseconds for transition speed
 	};
 	
@@ -52,6 +52,7 @@ function kkSlide(element, options) {
 	var totalSlides = 0;
 	var timer;
 	var streamWidth = 0;
+	var streamDir = 'left';
 	
 	// creates the slider and registers events
 	function render() {
@@ -63,7 +64,7 @@ function kkSlide(element, options) {
 		// display nav
 		renderNav();
 		
-		if (settings.displayNav) {
+		if (settings.displayNav && !settings.navFade) {
 			showNav();
 		} else {
 			hideNav();
@@ -80,14 +81,14 @@ function kkSlide(element, options) {
 			if (settings.autoplay) {
 				start();
 			}
-			
-			if (settings.pauseOnHover) {
-				$(_element).hover(function() {
-					stop();
-				}, function() {
-					start();
-				});
-			}
+		}
+		
+		if (settings.pauseOnHover) {
+			$(_element).hover(function() {
+				stop();
+			}, function() {
+				//start();
+			});
 		}
 	}
 	
@@ -96,29 +97,60 @@ function kkSlide(element, options) {
 		var button, nav = '<div class="kks_nav"></div>';
 		$(_element).append(nav);
 		
-		for (var i=0; i < totalSlides; i++) {
-			button = '<a href="#" id="kks_button'+i+'">&nbsp;</a>';
-			
+		if (settings.transition == 'stream') {
+			button = '<a href="#" id="kks_button'+i+'" class="stream-button reverse">Reverse</a>';
 			$(_element).find('.kks_nav').append(button);
+			button = '<a href="#" id="kks_button'+i+'" class="stream-button forward">Forword</a>';
+			$(_element).find('.kks_nav').append(button);
+
+			$(_element).find('.kks_nav').height(26);
+			
+			$(_element).find('.kks_nav').find('a.reverse').click(function() {
+				streamDir = 'right';
+				$(_element).find('.kks_slides_stream li').stop(true);
+				stream();
+			});
+			
+			$(_element).find('.kks_nav').find('a.forward').click(function() {
+				streamDir = 'left';
+				$(_element).find('.kks_slides_stream li').stop(true);
+				stream();
+			});			
+		} else {
+			for (var i=0; i < totalSlides; i++) {
+				button = '<a href="#" id="kks_button'+i+'">&nbsp;</a>';
+				
+				$(_element).find('.kks_nav').append(button);
+			}
+			
+			$(_element).find('.kks_nav').children().each(function(i, b) {
+				$(b).click(function(a) {
+					a.preventDefault();
+					stop();
+					switchSlide(i);
+				});				
+			});
 		}
 		
-		$(_element).find('.kks_nav').children().each(function(i, b) {
-			$(b).click(function(a) {
-				a.preventDefault();
-				stop();
-				switchSlide(i);
-			});				
-		});
+		if (settings.navFade) {
+			$(_element).hover(function() {
+				$(this).find('.kks_nav').fadeIn('slow');
+			}, function() {
+				$(this).find('.kks_nav').fadeOut('slow');
+			});
+		}
 	}
 	
-	// renders one stream segment ('li')
 	function renderStream(offset) {
 		var id = 'kks_'+new Date().getTime();
 		
-		$(_element).find('.kks_slides_stream').append('<li id="'+id+'"><div></div></li>');
+		if (streamDir == 'right') {
+			$(_element).find('.kks_slides_stream').prepend('<li id="'+id+'"><div></div></li>');
+		} else {
+			$(_element).find('.kks_slides_stream').append('<li id="'+id+'"><div></div></li>');
+		}
 		$(_element).find('#'+id).addClass('active');
 			
-		// copy each slide into the newly created li, then make sure the original is hidden
 		$.each(slides, function(i, e) {
 			$(slides[i].slide).css({position:'relative'}).clone().appendTo($(_element).find('#'+id).find('div')).show();
 			$(slides[i].slide).hide();
@@ -127,7 +159,11 @@ function kkSlide(element, options) {
 		$(_element).find('#'+id).width(streamWidth).show();
 
 		if (offset) {
-			$(_element).find('#'+id).css({left:$(_element).width()+'px'});
+			if (streamDir == 'right') {
+				$(_element).find('#'+id).css({left:(-1*streamWidth)+'px'});
+			} else {
+				$(_element).find('#'+id).css({left:$(_element).width()+'px'});
+			}
 		}
 		
 		$(_element).find('#'+id).hover(function() {
@@ -300,30 +336,66 @@ function kkSlide(element, options) {
 		var threshold = 0,		// point which to render new li, so there are no gaps between slides
 			rendered = ($(_element).find('.kks_slides_stream li').length>1) ? true : false,		// if a new li has been rendered
 			dur = settings.speed;	// transition duration
+
+		var durRate = settings.speed/streamWidth;
+		var toPos = streamWidth*-1;
 		
-		if (parseInt($(_element).find('.kks_slides_stream > .active').css('left'),10) < 0) {
-			dur = dur * (1-(Math.abs(parseInt($(_element).find('.kks_slides_stream > .active').css('left'),10))/streamWidth));
+		if (streamDir == 'right') {
+			if (parseInt($(_element).find('.kks_slides_stream li:last').css('left'),10) <= $(_element).width()) {
+				dur = Math.abs(durRate*($(_element).width()-parseInt($(_element).find('.kks_slides_stream li:last').css('left'),10)));
+			}
+			toPos = $(_element).width();
+			
+			threshold = 0;
+		} else {
+			if (parseInt($(_element).find('.kks_slides_stream > .active').css('left'),10) < 0) {
+				dur = Math.abs(durRate*((-streamWidth)-parseInt($(_element).find('.kks_slides_stream > .active').css('left'),10)));
+			}
+			
+			threshold = (streamWidth - $(_element).width())*-1;
 		}
 		
-		threshold = (streamWidth - $(_element).width())*-1;
-
-		$(_element).find('.kks_slides_stream li:first').animate({"left":(streamWidth*-1)+'px'}, {
-			duration: dur,
-			easing: settings.easing,
-			queue: true,
-			step: function(now, fx) {
-				if (rendered == false && now < threshold && $(_element).find('.kks_slides_stream li').length < 2) {
-					renderStream(true);
-					rendered = true;
-				} else if (rendered) {
-					$(_element).find('.kks_slides_stream li:last').css({left:(streamWidth+now)+'px'});
+		if (streamDir == 'right') {
+			$(_element).find('.kks_slides_stream li:last').animate({'left':toPos+'px'}, {
+				duration: dur,
+				easing: settings.easing,
+				queue: true,
+				step: function(now, fx) {
+					if (rendered == false && ((streamDir == 'left' && now < threshold) || (streamDir == 'right' && now >= threshold)) && $(_element).find('.kks_slides_stream li').length < 2) {
+						renderStream(true);
+						rendered = true;
+					} else if (rendered) {
+						$(_element).find('.kks_slides_stream li:first').css({left:(-streamWidth+now)+'px'});
+					}
+				},
+				complete: function() {
+					$(this).remove();
+					stream();
 				}
-			},
-			complete: function() {
-				$(this).remove();
-				stream();
-			}
-		});
+			});
+		} else {
+			$(_element).find('.kks_slides_stream li:first').animate({'left':toPos+'px'}, {
+				duration: dur,
+				easing: settings.easing,
+				queue: true,
+				step: function(now, fx) {
+					if (rendered == false && ((streamDir == 'left' && now < threshold) || (streamDir == 'right' && now >= threshold)) && $(_element).find('.kks_slides_stream li').length < 2) {
+						renderStream(true);
+						rendered = true;
+					} else if (rendered) {
+						if (streamDir == 'right') {
+							$(_element).find('.kks_slides_stream li:last').css({left:(-streamWidth+now)+'px'});
+						} else {
+							$(_element).find('.kks_slides_stream li:last').css({left:(streamWidth+now)+'px'});
+						}
+					}
+				},
+				complete: function() {
+					$(this).remove();
+					stream();
+				}
+			});
+		}
 	}
 	
 	/* Slideshow functions */
@@ -346,6 +418,5 @@ function kkSlide(element, options) {
 			timer = setTimeout(function() { nextSlide();resume(); }, settings.speed);
 		}
 	}
-	
 };
 })(jQuery);

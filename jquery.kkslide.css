@@ -1,21 +1,21 @@
 /*
 * kkSlide - a jQuery image slider plugin
 *
-* Version: 1.1.0
+* Version: 1.3.0
 * Copyright 2012 Kyle Knox - http://20xxproductions.com
 *
 * Licensed under MIT license
 *   http://en.wikipedia.org/wiki/MIT_License
 *
-* Date: 2012-04-10 00:29:00
+* Date: 2012-04-16 00:32:00
 */
 
 /* slides wrapper */
 .kks_slides {
 	width:100%;
 	height:100%;
-	overflow:hidden;
 	position:relative;
+	overflow:hidden;
 }
 
 .kks_slides .slide {
@@ -67,4 +67,12 @@ ul.kks_slides_stream li {
 
 .kks_nav a.selected {
 	background-position:0px 13px;
+}
+
+.kks_nav .stream-button {
+	background:none;
+	text-decoration:none;
+	color:#83B532;
+	width:70px;
+	margin:2px 6px;
 }
